@@ -21,7 +21,7 @@ contract HelperConfig is Script {
         } else if (block.chainid == 1) {
             activeNetworkConfig = getMainnetEthConfig();
         } else {
-            activeNetworkConfig = getAnvilEthConfig();
+            activeNetworkConfig = getOrCreateAnvilEthConfig();
         }
     }
 
@@ -35,7 +35,12 @@ contract HelperConfig is Script {
         return mainnetEthConfig;
     }
 
-    function getAnvilEthConfig() public returns (NetworkConfig memory) {
+    function getOrCreateAnvilEthConfig() public returns (NetworkConfig memory) {
+        // Why we do this?
+        // because without this, it deploys a new MockV3Aggregator every time we call activeNetworkConfig() function, which is not what we want.
+        if (activeNetworkConfig.priceFeed != address(0)) {
+            return activeNetworkConfig;
+        }
         // 1. Deploy the mocks
         // 2. returns the mock address
 
