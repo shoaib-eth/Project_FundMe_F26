@@ -39,6 +39,31 @@ contract FundMe {
         _;
     }
 
+    /**
+     * Why this is cheaper than the withdraw function?
+     * 1. We read the length of the s_funders array only once and store
+     *    it in a local variable (fundersLength) instead of reading it from storage multiple times in the for loop condition.
+     * 2. We use a local variable (funder) to store the current funder address 
+     *    instead of reading it from storage multiple times in the for loop body.
+     * 3. We use the call method to transfer the funds to the owner instead of the transfer or send methods, 
+     *    which can be more expensive in terms of gas cost.
+     * 
+     * Overall, by minimizing the number of storage reads and using a more efficient method for transferring funds, 
+     * the cheaperWithdraw function can save on gas costs compared to the withdraw function.
+     * 
+     * Note: The actual gas savings may vary depending on the number of funders and the specific implementation of the contract, so it's always a good idea to test and compare the gas costs of different functions in your specific use case.
+     */
+    function cheaperWithdraw() public onlyOwner {
+        uint256 fundersLength = s_funders.length;
+        for (uint256 funderIndex = 0; funderIndex < fundersLength; funderIndex++) {
+            address funder = s_funders[funderIndex];
+            s_addressToAmountFunded[funder] = 0;
+        }
+        s_funders = new address[](0);
+        (bool callSuccess,) = payable(msg.sender).call{value: address(this).balance}("");
+        require(callSuccess, "Call failed");
+    }
+ 
     function withdraw() public onlyOwner {
         for (uint256 funderIndex = 0; funderIndex < s_funders.length; funderIndex++) {
             address funder = s_funders[funderIndex];
