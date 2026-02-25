@@ -11,6 +11,7 @@ contract FundMeTest is Test {
     address SHOAIB = makeAddr("SHOAIB");
     uint256 constant SEND_VALUE = 0.1 ether;
     uint256 constant STARTING_BALANCE = 10 ether;
+    uint256 constant GAS_PRICE = 1;
 
     modifier Funded() {
         vm.prank(SHOAIB);
@@ -103,9 +104,14 @@ contract FundMeTest is Test {
         uint256 startingFundMeBalance = address(fundMe).balance;
 
         // Act
+        uint256 gasStart = gasleft();
+        vm.txGasPrice(GAS_PRICE); // set the gas price for the next transaction (optional, can be used to simulate different gas prices)
         vm.startPrank(fundMe.getOwner());
         fundMe.withdraw();
         vm.stopPrank();
+        uint256 gasEnd = gasleft();
+        uint256 gasUsed = (gasStart - gasEnd) * tx.gasprice; // calculate the total gas cost of the withdraw transaction
+        console.log("Gas Used: ", gasUsed);
 
         // Assert
         uint256 endingOwnerBalance = fundMe.getOwner().balance;
